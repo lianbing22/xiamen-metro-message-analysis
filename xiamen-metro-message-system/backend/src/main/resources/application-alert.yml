@@ -1,0 +1,158 @@
+# 告警系统配置
+alert:
+  # 告警规则引擎配置
+  rule-engine:
+    # 规则检查间隔（秒）
+    check-interval: 60
+    # 规则执行超时时间（毫秒）
+    execution-timeout: 30000
+    # 是否启用规则缓存
+    enable-cache: true
+    # 规则缓存大小
+    cache-size: 1000
+    # 规则缓存过期时间（分钟）
+    cache-expire-minutes: 30
+
+  # 告警管理配置
+  management:
+    # 默认抑制时间（分钟）
+    default-suppression-minutes: 60
+    # 最大连续触发次数
+    max-consecutive-triggers: 5
+    # 告警去重时间窗口（分钟）
+    deduplication-window-minutes: 60
+    # 告警历史保留天数
+    history-retention-days: 90
+    # 是否启用自动处理
+    enable-auto-resolution: false
+
+  # 通知服务配置
+  notification:
+    # 邮件通知配置
+    email:
+      # 是否启用邮件通知
+      enabled: true
+      # 发送超时时间（毫秒）
+      timeout: 10000
+      # 重试次数
+      retry-count: 3
+      # 重试间隔（毫秒）
+      retry-interval: 5000
+      # 批量发送大小
+      batch-size: 10
+      # 发送线程池大小
+      thread-pool-size: 5
+
+    # WebSocket通知配置
+    websocket:
+      # 是否启用WebSocket通知
+      enabled: true
+      # 心跳间隔（秒）
+      heartbeat-interval: 30
+      # 会话超时时间（分钟）
+      session-timeout-minutes: 30
+      # 最大连接数
+      max-connections: 1000
+
+    # 短信通知配置（可选）
+    sms:
+      # 是否启用短信通知
+      enabled: false
+      # 短信服务提供商
+      provider: aliyun
+      # 发送超时时间（毫秒）
+      timeout: 15000
+      # 重试次数
+      retry-count: 2
+      # 每日发送限制
+      daily-limit: 100
+
+  # 告警级别配置
+  levels:
+    critical:
+      # 通知方式
+      notification-methods: EMAIL,WEBSOCKET,SMS
+      # 自动升级时间（分钟）
+      escalation-minutes: 15
+      # 是否立即发送
+      immediate: true
+    warning:
+      # 通知方式
+      notification-methods: EMAIL,WEBSOCKET
+      # 自动升级时间（分钟）
+      escalation-minutes: 60
+      # 是否立即发送
+      immediate: false
+    info:
+      # 通知方式
+      notification-methods: WEBSOCKET
+      # 自动升级时间（分钟）
+      escalation-minutes: null
+      # 是否立即发送
+      immediate: false
+
+  # 告警处理配置
+  processing:
+    # 批处理大小
+    batch-size: 50
+    # 处理线程池大小
+    thread-pool-size: 10
+    # 队列大小
+    queue-size: 1000
+    # 处理超时时间（秒）
+    timeout: 120
+
+  # 监控配置
+  monitoring:
+    # 是否启用性能监控
+    enable-metrics: true
+    # 指标收集间隔（秒）
+    metrics-interval: 60
+    # 是否启用健康检查
+    enable-health-check: true
+    # 健康检查间隔（秒）
+    health-check-interval: 30
+
+# 邮件配置
+spring:
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: metro-alerts@xiamen-metro.com
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+
+# Thymeleaf模板配置
+  thymeleaf:
+    cache: false
+    mode: HTML
+    encoding: UTF-8
+    servlet:
+      content-type: text/html
+
+# 线程池配置
+thread-pool:
+  alert-notification:
+    core-size: 5
+    max-size: 20
+    queue-capacity: 100
+    thread-name-prefix: "alert-notification-"
+    rejection-policy: CALLER_RUNS
+
+# 缓存配置
+cache:
+  alert:
+    time-to-live: 300 # 5分钟
+    max-size: 1000
+  rule:
+    time-to-live: 1800 # 30分钟
+    max-size: 500

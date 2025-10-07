@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: xiamen-metro-postgres-dev
+    environment:
+      POSTGRES_DB: xiamen_metro_message
+      POSTGRES_USER: metro_user
+      POSTGRES_PASSWORD: metro_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ../database/init:/docker-entrypoint-initdb.d
+    networks:
+      - metro-network
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: xiamen-metro-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - metro-network
+
+  # MinIO对象存储
+  minio:
+    image: minio/minio:latest
+    container_name: xiamen-metro-minio-dev
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data_dev:/data
+    networks:
+      - metro-network
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+
+  # MinIO客户端 - 用于创建初始存储桶
+  minio-setup:
+    image: minio/mc:latest
+    container_name: xiamen-metro-minio-setup-dev
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/metro-files --ignore-existing;
+      /usr/bin/mc policy set public myminio/metro-files;
+      exit 0;
+      "
+    networks:
+      - metro-network
+    restart: "no"
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: xiamen-metro-nginx-dev
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - metro-network
+
+  # 后端服务
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    container_name: xiamen-metro-backend-dev
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=xiamen_metro_message
+      - DB_USER=metro_user
+      - DB_PASSWORD=metro_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    volumes:
+      - ../backend:/app
+      - /app/target
+    networks:
+      - metro-network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.dev
+    container_name: xiamen-metro-frontend-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    networks:
+      - metro-network
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
+  minio_data_dev:
+
+networks:
+  metro-network:
+    driver: bridge

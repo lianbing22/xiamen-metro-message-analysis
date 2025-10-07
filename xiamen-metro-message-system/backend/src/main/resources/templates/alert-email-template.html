@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>厦门地铁设备告警通知</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 30px;
+        }
+        .alert-info {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .alert-critical {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .info-table th,
+        .info-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .info-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .severity-critical {
+            background-color: #dc3545;
+            color: white;
+        }
+        .severity-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .severity-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .actions {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .highlight {
+            font-weight: 600;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>厦门地铁设备告警通知</h1>
+            <p th:text="'告警时间：' + ${#temporals.format(alert.alertTime, 'yyyy-MM-dd HH:mm:ss')}">告警时间</p>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 告警级别和标题 -->
+            <div th:with="severityClass=${alert.alertLevel.name() == 'CRITICAL' ? 'alert-critical' :
+                                          (alert.alertLevel.name() == 'WARNING' ? 'alert-warning' : 'alert-info')}"
+                 th:class="${severityClass}">
+                <h2 th:text="${alert.alertTitle}">告警标题</h2>
+                <div class="severity-badge"
+                     th:classappend="${alert.alertLevel.name() == 'CRITICAL' ? 'severity-critical' :
+                                    (alert.alertLevel.name() == 'WARNING' ? 'severity-warning' : 'severity-info')}"
+                     th:text="${alert.alertLevel.description}">严重级别</div>
+            </div>
+
+            <!-- 告警详细信息 -->
+            <table class="info-table">
+                <tr>
+                    <th width="150">告警ID</th>
+                    <td th:text="${alert.alertId}">告警ID</td>
+                </tr>
+                <tr>
+                    <th>设备ID</th>
+                    <td th:text="${alert.deviceId}">设备ID</td>
+                </tr>
+                <tr th:if="${alert.triggeredValue != null and alert.thresholdValue != null}">
+                    <th>当前值</th>
+                    <td>
+                        <span class="highlight" th:text="${alert.triggeredValue}">当前值</span>
+                        <span th:text="' (阈值: ' + ${alert.thresholdValue} + ')'">阈值</span>
+                    </td>
+                </tr>
+                <tr th:if="${alert.confidenceScore != null}">
+                    <th>置信度</th>
+                    <td th:text="${#numbers.formatPercent(alert.confidenceScore, 1, 1)}">置信度</td>
+                </tr>
+                <tr>
+                    <th>告警内容</th>
+                    <td th:text="${alert.alertContent}">告警内容</td>
+                </tr>
+                <tr th:if="${alert.durationMinutes != null}">
+                    <th>持续时间</th>
+                    <td th:text="${alert.durationMinutes + ' 分钟'}">持续时间</td>
+                </tr>
+            </table>
+
+            <!-- 建议操作 -->
+            <div class="actions">
+                <h3>建议操作：</h3>
+                <ul>
+                    <li>立即登录系统查看详细信息</li>
+                    <li>根据告警级别采取相应的处理措施</li>
+                    <li>处理完成后请在系统中标记告警状态</li>
+                    <li>如为误报，请及时标记以便系统优化</li>
+                </ul>
+            </div>
+
+            <!-- 重要提示 -->
+            <div th:if="${alert.alertLevel.name() == 'CRITICAL'}" class="alert-critical">
+                <strong>⚠️ 重要提醒：</strong> 此为严重级别告警，请立即处理！
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <div class="footer">
+            <p>此邮件由厦门地铁设备报文分析系统自动发送</p>
+            <p th:text="'发送时间：' + ${#temporals.format(currentTime, 'yyyy-MM-dd HH:mm:ss')}">发送时间</p>
+            <p>请勿回复此邮件。如有疑问，请联系系统管理员。</p>
+        </div>
+    </div>
+</body>
+</html>

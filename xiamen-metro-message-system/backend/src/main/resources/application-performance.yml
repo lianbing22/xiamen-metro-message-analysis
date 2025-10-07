@@ -1,0 +1,277 @@
+# 性能优化配置
+spring:
+  # 优化后的数据库配置
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/xiamen_metro_message}
+    username: ${DB_USER:metro_user}
+    password: ${DB_PASSWORD:metro_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      pool-name: MetroHikariPool
+      auto-commit: false
+      connection-test-query: SELECT 1
+
+  # 优化后的JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
+        fetch_size: 100
+        connection:
+          provider_disables_autocommit: true
+          handling_mode: DELAYED_ACQUISITION_AND_RELEASE_AFTER_STATEMENT
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+        generate_statistics: false
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: 1000
+
+  # 优化后的Redis配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 50
+          max-idle: 20
+          min-idle: 10
+          max-wait: 3000ms
+        shutdown-timeout: 100ms
+        cluster:
+          refresh:
+            adaptive: true
+            period: 30s
+
+  # 优化后的缓存配置
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000  # 1小时
+      cache-null-values: false
+      key-prefix: metro:
+      use-key-prefix: true
+
+  # 优化后的任务执行配置
+  task:
+    execution:
+      pool:
+        core-size: 10
+        max-size: 50
+        queue-capacity: 200
+        keep-alive: 60s
+        allow-core-thread-timeout: true
+    scheduling:
+      pool:
+        size: 10
+
+# 服务器性能优化配置
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  # Tomcat优化配置
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    max-connections: 8192
+    accept-count: 200
+    connection-timeout: 20000
+    max-http-form-post-size: 104857600
+    max-swallow-size: 104857600
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,application/xml,text/xml,application/xml
+    min-response-size: 1024
+  http2:
+    enabled: true
+  # 启用响应缓冲
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        secure: false
+
+# 管理端点性能监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,threaddump,heapdump,caches
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+    cache:
+      time-to-live: 10s
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 30s
+        descriptions: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: 100ms,200ms,500ms,1s,3s
+    web:
+      server:
+        request:
+          autotime:
+            enabled: true
+            percentiles: 0.5,0.9,0.95,0.99
+
+# 性能日志配置
+logging:
+  level:
+    com.xiamen.metro: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.springframework.web: INFO
+    org.springframework.cache: DEBUG
+    com.zaxxer.hikari: INFO
+    io.lettuce.core: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+    max-size: 100MB
+    max-history: 30
+    total-size-cap: 1GB
+
+# 性能优化自定义配置
+app:
+  performance:
+    # 缓存配置
+    cache:
+      default-ttl: 3600  # 1小时
+      user-ttl: 1800     # 30分钟
+      hot-data-ttl: 900  # 15分钟
+      query-result-ttl: 600  # 10分钟
+
+    # 异步处理配置
+    async:
+      core-pool-size: 10
+      max-pool-size: 50
+      queue-capacity: 200
+      thread-name-prefix: MetroAsync
+
+    # 文件处理优化
+    file:
+      chunk-size: 8192  # 8KB
+      max-concurrent-uploads: 10
+      async-processing: true
+
+    # API限流配置
+    rate-limit:
+      enabled: true
+      requests-per-minute: 1000
+      burst-capacity: 100
+
+    # 连接池监控
+    pool-monitoring:
+      enabled: true
+      check-interval: 30s
+
+    # 慢查询监控
+    slow-query:
+      threshold: 1000  # 1秒
+      log-enabled: true
+
+    # JVM监控
+    jvm:
+      monitor-enabled: true
+      gc-logging: true
+      memory-threshold: 0.8
+
+# GLM API性能优化配置
+glm:
+  api:
+    url: ${GLM_API_URL:https://open.bigmodel.cn/api/coding/paas/v4}
+    key: ${GLM_API_KEY:77519fea6df4468ea8a0a0dceb1e9df4.mkATxCcEaNh30hy7}
+  rate-limit:
+    requests-per-minute: ${GLM_RATE_LIMIT:1000}
+    burst-capacity: 50
+  retry:
+    max-attempts: ${GLM_RETRY_ATTEMPTS:3}
+    backoff-delay: 1000
+  timeout:
+    connect: 5000   # 5秒
+    read: 15000     # 15秒
+  cache:
+    ttl: 86400      # 24小时
+    error-ttl: 1800 # 30分钟
+  performance:
+    connection-pool-size: 20
+    max-idle-connections: 10
+    keep-alive-duration: 30000
+
+# Resilience4j性能配置
+resilience4j:
+  ratelimiter:
+    instances:
+      glmApi:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0
+        registerHealthIndicator: true
+      fileUpload:
+        limitForPeriod: 20
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0
+        registerHealthIndicator: true
+  retry:
+    instances:
+      glmApi:
+        maxRetryAttempts: 3
+        waitDuration: 1000
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - java.net.SocketTimeoutException
+        registerHealthIndicator: true
+  circuitbreaker:
+    instances:
+      glmApi:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        registerHealthIndicator: true

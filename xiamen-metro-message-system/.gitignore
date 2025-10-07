@@ -1,0 +1,62 @@
+# 编译输出
+target/
+dist/
+build/
+out/
+
+# IDE配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+logs/
+
+# 依赖目录
+node_modules/
+.mvn/
+!mvnw
+!mvnw.cmd
+
+# 环境配置
+.env
+.env.local
+.env.*.local
+
+# 数据库
+*.db
+*.sqlite
+
+# 缓存
+.cache/
+.npm/
+.eslintcache
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 临时文件
+tmp/
+temp/
+
+# Docker
+.dockerignore
+
+# 密钥和证书
+*.pem
+*.key
+*.crt
+*.p12
+
+# Spring Boot特定
+application-*.properties
+!application.properties
+!application.yml

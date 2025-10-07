@@ -1,0 +1,83 @@
+# 告警系统验证配置
+spring:
+  profiles:
+    active: test,validation
+
+  # 数据库配置（测试用）
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  # 邮件配置（测试用）
+  mail:
+    host: localhost
+    port: 25
+    username: test@example.com
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+# 验证配置
+app:
+  validation:
+    enabled: true
+
+# 告警系统配置
+alert:
+  rule-engine:
+    check-interval: 30
+    execution-timeout: 10000
+    enable-cache: true
+    cache-size: 100
+    cache-expire-minutes: 10
+
+  management:
+    default-suppression-minutes: 5
+    max-consecutive-triggers: 3
+    deduplication-window-minutes: 30
+    history-retention-days: 7
+
+  notification:
+    email:
+      enabled: true
+      timeout: 5000
+      retry-count: 1
+      thread-pool-size: 2
+    websocket:
+      enabled: true
+      heartbeat-interval: 10
+      session-timeout-minutes: 5
+      max-connections: 100
+    sms:
+      enabled: false
+
+# 日志配置
+logging:
+  level:
+    com.xiamen.metro.message: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# 测试数据配置
+test:
+  data:
+    generate-sample-data: true
+    sample-device-count: 3
+    sample-days: 7
