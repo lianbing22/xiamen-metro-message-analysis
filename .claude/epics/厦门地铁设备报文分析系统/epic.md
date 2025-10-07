@@ -4,7 +4,7 @@ status: backlog
 created: 2025-10-07T00:12:03Z
 progress: 0%
 prd: .claude/prds/厦门地铁设备报文分析系统.md
-github: [Will be updated when synced to GitHub]
+github: https://github.com/lianbing22/xiamen-metro-message-analysis
 ---
 
 # Epic: 厦门地铁设备报文分析系统
